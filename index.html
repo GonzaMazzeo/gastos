@@ -1,0 +1,1213 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gastos Bel y Gonza</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gastos" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <style>
+    :root { --bg:#0b1220; --card:#111a2e; --text:#e8eefc; --muted:#9db0d2; --accent:#7c3aed; --ok:#22c55e; --bad:#ef4444; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: linear-gradient(180deg,#070b14,#0b1220); color: var(--text); }
+    header { padding:16px 16px 8px; position: sticky; top:0; background: rgba(11,18,32,.92); backdrop-filter: blur(10px); border-bottom:1px solid rgba(255,255,255,.06); z-index: 10; }
+    h1 { margin:0; font-size:18px; }
+    .tabs { display:flex; gap:8px; margin-top:10px; }
+    .tab { flex:1; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04); color: var(--text); cursor:pointer; }
+    .tab.active { border-color: rgba(124,58,237,.7); box-shadow: 0 0 0 2px rgba(124,58,237,.25) inset; }
+    main { padding:16px; max-width: 1180px; margin: 0 auto; }
+    .card { background: rgba(17,26,46,.9); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:14px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+    .grid { display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media (min-width: 860px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+    label { display:block; font-size:12px; color: var(--muted); margin-bottom:6px; }
+
+    input, select, textarea {
+      width:100%;
+      box-sizing:border-box;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:12px;
+      outline:none;
+    }
+    select { color-scheme: dark; }
+    select option { background: #0b1220; color: #e8eefc; }
+    textarea { min-height: 84px; resize: vertical; }
+
+    button {
+      width:100%;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(124,58,237,.92);
+      color:white;
+      font-weight:700;
+      cursor:pointer;
+      transition: opacity .15s ease;
+    }
+    button.secondary { background: rgba(255,255,255,.08); }
+    button.danger { background: rgba(239,68,68,.90); }
+    button:disabled { opacity: .65; cursor: not-allowed; }
+
+    .row { display:flex; gap:10px; }
+    .row > * { flex:1; }
+    .hint { font-size:12px; color: var(--muted); margin-top:8px; }
+
+    .toast{
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      min-width: 260px;
+      max-width: 92vw;
+      padding: 12px 14px;
+      border-radius: 14px;
+      display: none;
+      font-weight: 700;
+      box-shadow: 0 16px 40px rgba(0,0,0,.45);
+    }
+    .toast.ok { background: rgba(34,197,94,.18); border:1px solid rgba(34,197,94,.45); }
+    .toast.err { background: rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.45); }
+
+    .dashTop { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+    .dashTop .field { min-width: 180px; flex: 0 0 auto; }
+    .pill { display:inline-block; padding:6px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06); font-size:12px; }
+    .pill.ok { border-color: rgba(34,197,94,.40); background: rgba(34,197,94,.12); }
+    .pill.warn { border-color: rgba(124,58,237,.55); background: rgba(124,58,237,.12); }
+    .pill.bad { border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); }
+
+    .table { width:100%; border-collapse: collapse; margin-top:10px; }
+    .table th, .table td { text-align:left; padding:10px; border-bottom:1px solid rgba(255,255,255,.08); font-size:13px; vertical-align: top; }
+    .right { text-align:right; }
+    .muted { color: var(--muted); }
+    .clickable { cursor:pointer; }
+    .nowrap { white-space: nowrap; }
+
+    /* Modal */
+    .modalBackdrop{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 16px;
+    }
+    .modal{
+      width: min(980px, 100%);
+      background: rgba(17,26,46,.98);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+    .modalHead{
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .modalTitle{ font-weight: 800; }
+    .smallBtn{
+      width: auto;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="toast ok" id="toastOk">✅</div>
+  <div class="toast err" id="toastErr">⚠️</div>
+
+  <header>
+    <h1>Gastos Bel y Gonza</h1>
+    <div class="tabs">
+      <button class="tab active" id="tabCarga" onclick="showTab('carga')">Cargar</button>
+      <button class="tab" id="tabDash" onclick="showTab('dash')">Dashboard</button>
+      <button class="tab" id="tabEdit" onclick="showTab('edit')">Editar</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- CARGA -->
+    <section id="viewCarga" class="card">
+      <div class="grid two">
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="fecha" />
+        </div>
+        <div>
+          <label>Pagado por</label>
+          <select id="pagadoPor"></select>
+        </div>
+        <div>
+          <label>Categoría</label>
+          <select id="categoria" onchange="onCategoriaChange()"></select>
+        </div>
+        <div>
+          <label>Concepto</label>
+          <select id="concepto"></select>
+        </div>
+        <div>
+          <label>Costo total</label>
+          <input type="number" id="costoTotal" inputmode="decimal" placeholder="Ej: 2100" />
+        </div>
+        <div>
+          <label>Cant. personas (para costo por persona)</label>
+          <input type="number" id="cantPersonas" inputmode="numeric" placeholder="Ej: 2" value="2" />
+        </div>
+        <div>
+          <label>Estado</label>
+          <select id="estado"></select>
+        </div>
+        <div>
+          <label>Medio</label>
+          <select id="medio"></select>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label>Notas (referencia)</label>
+        <textarea id="notas" placeholder="Ej: MercadoPago #1234 / Ticket / Transferencia..."></textarea>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button id="btnGuardar" onclick="guardar()">Guardar gasto</button>
+        <button id="btnLimpiar" class="secondary" onclick="limpiar()">Limpiar</button>
+      </div>
+
+      <div class="hint">Tip: en el celu podés “Agregar a pantalla de inicio” para que quede como app.</div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="viewDash" class="card" style="display:none;">
+      <div class="dashTop">
+        <div class="field">
+          <label>Mes</label>
+          <input type="month" id="monthPicker" />
+        </div>
+        <div class="field">
+          <button onclick="cargarDashboard()">Ver</button>
+        </div>
+        <div class="field">
+          <span class="pill" id="totalMes">Total: $0</span>
+        </div>
+        <div class="field">
+          <span class="pill warn" id="balancePill">Balance: -</span>
+        </div>
+        <div class="field">
+          <span class="pill warn" id="estadoMesPill">Estado mes: -</span>
+        </div>
+
+        <div class="field">
+          <span class="pill warn" id="balanceGlobalPill">Balance actual: -</span>
+        </div>
+        <div class="field">
+          <span class="pill" id="cuentaCasaPill">Cuenta Casa: -</span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button class="secondary" onclick="openMovModal('Aporte')">Registrar aporte</button>
+        <button class="secondary" onclick="openSaldarFromBalance()">Saldar cuentas</button>
+      </div>
+
+      <div class="muted" style="margin-top:8px;">
+        Balance del mes: solo gastos pagados por Gonza/Bel (excluye "Cuenta Casa") y <b>no</b> contempla movimientos "Saldar".
+        Estado mes: sí contempla "Saldar" y compensaciones entre meses.
+      </div>
+
+
+      <div class="muted" style="margin-top:12px;">Totales por categoría:</div>
+      <table class="table" id="tablaResumen">
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th class="right">Total</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="margin-top:14px;">
+        <div class="muted" style="margin-bottom:8px;">Totales por concepto:</div>
+        <table class="table" id="tablaConceptos">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th class="right">Total</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+
+      <div style="margin-top:14px;">
+        <div class="muted" style="margin-bottom:8px;">Detalle (incluye Notas):</div>
+        <table class="table" id="tablaDetalle">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Categoría</th>
+              <th>Concepto</th>
+              <th>Notas</th>
+              <th>Pagó</th>
+              <th class="right">Total</th>
+              <th class="right">x persona</th>
+              <th>Medio</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="muted" style="margin-bottom:8px;">Movimientos del mes (Aportes / Saldar):</div>
+        <table class="table" id="tablaMovDash">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Deudor</th>
+              <th>Acreedor</th>
+              <th class="right">Monto</th>
+              <th>Notas</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EDITAR -->
+    <section id="viewEdit" class="card" style="display:none;">
+      <div class="dashTop">
+        <div class="field">
+          <label>Mes</label>
+          <input type="month" id="monthPickerEdit" />
+        </div>
+        <div class="field">
+          <button onclick="cargarEditar()">Cargar</button>
+        </div>
+        <div class="field">
+          <span class="pill" id="editInfo">-</span>
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top:8px;">Gastos (con Notas):</div>
+      <table class="table" id="tablaEditGastos">
+        <thead>
+          <tr>
+            <th>Fila</th>
+            <th>Fecha</th>
+            <th>Categoría</th>
+            <th>Concepto</th>
+            <th>Notas</th>
+            <th>Pagó</th>
+            <th class="right">Total</th>
+            <th>Medio</th>
+            <th>Estado</th>
+            <th class="nowrap">Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="muted" style="margin-top:16px;">Movimientos (Aportes / Saldar):</div>
+      <table class="table" id="tablaEditMovs">
+        <thead>
+          <tr>
+            <th>Fila</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Deudor</th>
+            <th>Acreedor</th>
+            <th class="right">Monto</th>
+            <th>Notas</th>
+            <th class="nowrap">Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- MODAL EDIT GASTO -->
+  <div class="modalBackdrop" id="modalGastoBackdrop">
+    <div class="modal">
+      <div class="modalHead">
+        <div class="modalTitle" id="modalGastoTitle">Editar gasto</div>
+        <button class="smallBtn secondary" onclick="closeGastoModal()">✕ Cerrar</button>
+      </div>
+
+      <div class="grid two">
+        <div><label>Fecha</label><input type="date" id="g_fecha" /></div>
+        <div><label>Pagado por</label><select id="g_pagadoPor"></select></div>
+        <div><label>Categoría</label><select id="g_categoria" onchange="onGastoModalCategoriaChange()"></select></div>
+        <div><label>Concepto</label><select id="g_concepto"></select></div>
+        <div><label>Costo total</label><input type="number" id="g_costoTotal" inputmode="decimal" /></div>
+        <div><label>Cant. personas</label><input type="number" id="g_cantPersonas" inputmode="numeric" value="2" /></div>
+        <div><label>Estado</label><select id="g_estado"></select></div>
+        <div><label>Medio</label><select id="g_medio"></select></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label>Notas</label>
+        <textarea id="g_notas"></textarea>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button id="btnGastoModalGuardar" onclick="guardarCambiosGasto()">Guardar cambios</button>
+        <button class="danger" id="btnGastoModalBorrar" onclick="borrarGastoDesdeModal()">Borrar fila</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MOVIMIENTO (APORTE / SALDAR) -->
+  <div class="modalBackdrop" id="modalMovBackdrop">
+    <div class="modal">
+      <div class="modalHead">
+        <div class="modalTitle" id="modalMovTitle">Movimiento</div>
+        <button class="smallBtn secondary" onclick="closeMovModal()">✕ Cerrar</button>
+      </div>
+
+      <div class="grid two">
+        <div><label>Fecha</label><input type="date" id="m_fecha" /></div>
+        <div>
+          <label>Tipo</label>
+          <select id="m_tipo" onchange="onMovTipoChange()">
+            <option value="Aporte">Aporte</option>
+            <option value="Saldar">Saldar</option>
+          </select>
+        </div>
+
+        <div><label>Deudor (quien paga)</label><select id="m_deudor"></select></div>
+        <div><label>Acreedor</label><select id="m_acreedor"></select></div>
+
+        <div><label>Monto</label><input type="number" id="m_monto" inputmode="decimal" /></div>
+        <div><label>Notas</label><input type="text" id="m_notas" placeholder="Referencia..." /></div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button id="btnMovGuardar" onclick="guardarMov()">Guardar</button>
+        <button class="danger" id="btnMovBorrar" onclick="borrarMovDesdeModal()" style="display:none;">Borrar</button>
+      </div>
+    </div>
+  </div>
+
+<script src="config.js"></script>
+<script>
+  /************ ADAPTADOR PWA -> APPS SCRIPT ************
+   * Reemplaza google.script.run por fetch al Web App, manteniendo la misma
+   * sintaxis (withSuccessHandler / withFailureHandler / nombreFuncion(args)),
+   * así el resto del código de la app queda idéntico.
+   ******************************************************/
+  const TOKEN_KEY = 'gastos_api_token';
+
+  function getToken_() {
+    let t = null;
+    try { t = localStorage.getItem(TOKEN_KEY); } catch (e) {}
+    if (!t) {
+      t = (prompt('Ingresá la clave de acceso de la app (se guarda solo en este dispositivo):') || '').trim();
+      if (t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+    }
+    return t;
+  }
+
+  async function callApi_(fn, args) {
+    const url = window.GASTOS_API_URL;
+    if (!url || url.indexOf('PEGAR_') === 0) throw new Error('Falta configurar GASTOS_API_URL en config.js');
+
+    const token = getToken_();
+    if (!token) throw new Error('Falta la clave de acceso');
+
+    // text/plain evita el preflight CORS (Apps Script no responde OPTIONS)
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token, fn, args }),
+    });
+    const out = await res.json();
+
+    if (!out.ok) {
+      if (out.code === 'UNAUTHORIZED') {
+        try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+      }
+      throw new Error(out.error || 'Error desconocido');
+    }
+    return out.data;
+  }
+
+  function makeRunner_(onOk, onFail) {
+    return new Proxy({}, {
+      get(_, name) {
+        if (name === 'withSuccessHandler') return (f) => makeRunner_(f, onFail);
+        if (name === 'withFailureHandler') return (f) => makeRunner_(onOk, f);
+        return (...args) => {
+          callApi_(String(name), args).then(
+            (data) => { if (onOk) onOk(data); },
+            (err) => { if (onFail) onFail(err); else console.error(err); }
+          );
+        };
+      }
+    });
+  }
+
+  window.google = { script: { run: makeRunner_() } };
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+
+  /************ APP ************/
+  let CATALOGO = null;
+
+  // dashboard
+  let DASH_ROWS = [];
+  let DASH_FILTER = null;
+  let DASH_BAL = null;
+  let BAL_GLOBAL = null;
+  let DASH_RECON = null;
+
+  // edit
+  let EDIT_GASTOS = [];
+  let EDIT_MOVS = [];
+
+  // modal state
+  let GASTO_MODAL_ROW = null;
+  let MOV_MODAL_ROW = null;
+
+  let toastTimer = null;
+
+  function showTab(which) {
+    document.getElementById('viewCarga').style.display = (which === 'carga') ? '' : 'none';
+    document.getElementById('viewDash').style.display  = (which === 'dash') ? '' : 'none';
+    document.getElementById('viewEdit').style.display  = (which === 'edit') ? '' : 'none';
+
+    document.getElementById('tabCarga').classList.toggle('active', which === 'carga');
+    document.getElementById('tabDash').classList.toggle('active', which === 'dash');
+    document.getElementById('tabEdit').classList.toggle('active', which === 'edit');
+  }
+
+  function setToast(id, msg) {
+    const ok = document.getElementById('toastOk');
+    const err = document.getElementById('toastErr');
+    ok.style.display = 'none';
+    err.style.display = 'none';
+
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  function fmtMoney(n) {
+    const v = Number(n || 0);
+    return v.toLocaleString('es-AR', {style:'currency', currency:'ARS'});
+  }
+
+  function setLoading(isLoading) {
+    const btn = document.getElementById('btnGuardar');
+    const btn2 = document.getElementById('btnLimpiar');
+    btn.disabled = isLoading;
+    btn2.disabled = isLoading;
+    btn.textContent = isLoading ? 'Guardando…' : 'Guardar gasto';
+  }
+
+  function toDateInputValue(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function init() {
+    const today = new Date();
+    const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const ymd = toDateInputValue(today);
+
+    document.getElementById('fecha').value = ymd;
+    document.getElementById('monthPicker').value = ym;
+    document.getElementById('monthPickerEdit').value = ym;
+    document.getElementById('m_fecha').value = ymd;
+    google.script.run
+      .withSuccessHandler((cat) => {
+        CATALOGO = cat;
+
+        fillSelect('categoria', cat.categories, true);
+        fillSelect('estado', cat.estados, false);
+        fillSelect('medio', cat.medios, false);
+        fillSelect('pagadoPor', cat.pagadores, false);
+
+        // edit gasto modal
+        fillSelect('g_categoria', cat.categories, true);
+        fillSelect('g_estado', cat.estados, false);
+        fillSelect('g_medio', cat.medios, false);
+        fillSelect('g_pagadoPor', cat.pagadores, false);
+
+        // movimientos modal
+        fillSelect('m_deudor', cat.personas, false);
+        fillSelect('m_acreedor', ['Cuenta Casa', ...cat.personas], false);
+        document.getElementById('m_acreedor').value = 'Cuenta Casa';
+
+        onCategoriaChange();
+        onGastoModalCategoriaChange();
+        onMovTipoChange();
+      })
+      .withFailureHandler((e) => alert('Error cargando catálogo: ' + (e && e.message ? e.message : e)))
+      .getCatalogo();
+  }
+
+  function fillSelect(id, items, includeEmpty) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    if (includeEmpty) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'Elegí...';
+      sel.appendChild(opt);
+    }
+    (items || []).forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    if (!includeEmpty && sel.options.length) sel.selectedIndex = 0;
+  }
+
+  function onCategoriaChange() {
+    const cat = document.getElementById('categoria').value;
+    const concepts = (CATALOGO?.conceptsByCategory?.[cat]) || [];
+    fillSelect('concepto', concepts, true);
+  }
+
+  function limpiar() {
+    document.getElementById('categoria').value = '';
+    document.getElementById('concepto').innerHTML = '';
+    document.getElementById('costoTotal').value = '';
+    document.getElementById('notas').value = '';
+  }
+
+  function guardar() {
+    const payload = {
+      fechaISO: document.getElementById('fecha').value,
+      categoria: document.getElementById('categoria').value,
+      concepto: document.getElementById('concepto').value,
+      notas: document.getElementById('notas').value,
+      pagadoPor: document.getElementById('pagadoPor').value,
+      costoTotal: document.getElementById('costoTotal').value,
+      cantPersonas: document.getElementById('cantPersonas').value,
+      estado: document.getElementById('estado').value,
+      medio: document.getElementById('medio').value,
+    };
+
+    if (!payload.fechaISO || !payload.categoria || !payload.concepto || !payload.costoTotal) {
+      setToast('toastErr', '⚠️ Completá fecha, categoría, concepto y costo total');
+      return;
+    }
+
+    setLoading(true);
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        setLoading(false);
+        if (res?.ok) {
+          setToast('toastOk', '✅ Guardado (fila ' + res.row + ')');
+          limpiar();
+        } else {
+          setToast('toastErr', '⚠️ Respuesta inesperada');
+        }
+      })
+      .withFailureHandler((e) => {
+        setLoading(false);
+        setToast('toastErr', '⚠️ ' + (e?.message || e));
+      })
+      .guardarGasto(payload);
+  }
+
+  /************ DASHBOARD ************/
+  function cargarDashboard() {
+    const ym = document.getElementById('monthPicker').value;
+    if (!ym) return;
+    const [y, m] = ym.split('-').map(Number);
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        DASH_ROWS = res?.rows || [];
+        DASH_FILTER = null;
+        renderDashboard();
+      })
+      .withFailureHandler((e) => alert('Error gastos: ' + (e?.message || e)))
+      .getGastosDelMes(y, m);
+
+    google.script.run
+      .withSuccessHandler((bal) => {
+        DASH_BAL = bal;
+        renderBalance();
+      })
+      .withFailureHandler((e) => alert('Error balance: ' + (e?.message || e)))
+      .getBalanceDelMes(y, m);
+
+    google.script.run
+      .withSuccessHandler((rec) => {
+        DASH_RECON = rec;
+        renderEstadoMes(rec);
+      })
+      .withFailureHandler((e) => alert('Error estado mes: ' + (e?.message || e)))
+      .getReconstruccionDelMes(y, m);
+
+
+    google.script.run
+      .withSuccessHandler((cc) => {
+        renderCuentaCasa(cc);
+      })
+      .withFailureHandler((e) => alert('Error cuenta casa: ' + (e?.message || e)))
+      .getCuentaCasaDelMes(y, m);
+
+    google.script.run
+      .withSuccessHandler((movs) => {
+        renderMovDash(movs?.rows || []);
+      })
+      .withFailureHandler((e) => alert('Error movimientos: ' + (e?.message || e)))
+      .getMovimientosDelMes(y, m);
+
+      google.script.run
+      .withSuccessHandler((balGlobal) => {
+        BAL_GLOBAL = balGlobal;
+        renderBalanceGlobal(balGlobal);
+      })
+      .withFailureHandler((e) => alert('Error balance global: ' + (e?.message || e)))
+      .getBalanceGlobal();
+
+  }
+
+  function renderBalance() {
+    const pill = document.getElementById('balancePill');
+    const r = DASH_BAL?.resumen;
+    if (!r) {
+      pill.textContent = 'Balance: -';
+      pill.className = 'pill warn';
+      return;
+    }
+    if (!r.monto || r.monto <= 0) {
+      pill.textContent = 'Balance: están parejos ✅';
+      pill.className = 'pill ok';
+      return;
+    }
+    pill.textContent = 'Balance: ' + r.deudor + ' le debe a ' + r.acreedor + ' ' + fmtMoney(r.monto);
+    pill.className = 'pill bad';
+  }
+
+  function fmtMonthKey(key) {
+  // "2026-01" -> "01/2026"
+  if (!key || key.length < 7) return String(key || '');
+  const y = key.slice(0,4);
+  const m = key.slice(5,7);
+  return `${m}/${y}`;
+}
+
+function renderEstadoMes(rec) {
+  const pill = document.getElementById('estadoMesPill');
+  if (!pill) return;
+
+  if (!rec || !rec.estado) {
+    pill.textContent = 'Estado mes: -';
+    pill.className = 'pill warn';
+    return;
+  }
+
+  const est = rec.estado;
+  const pendiente = Number(est.pendiente || 0);
+
+  if (pendiente <= 0) {
+    // Saldado
+    let extra = '';
+    if (est.saldadoPor?.tipo) extra += ` · ${est.saldadoPor.tipo}`;
+    if (est.saldadoISO) extra += ` · ${est.saldadoISO}`;
+    if (Array.isArray(est.juntoCon) && est.juntoCon.length) {
+      extra += ' · junto con: ' + est.juntoCon.map(fmtMonthKey).join(', ');
+    }
+
+    pill.textContent = 'Estado mes: saldado ✅' + extra;
+    pill.className = 'pill ok';
+    return;
+  }
+
+  if (pendiente > 0) {
+  const mes = rec.mes || {};
+  if (mes.deudor && mes.acreedor) {
+    pill.textContent = `Estado mes: ${mes.deudor} le debe a ${mes.acreedor} ${fmtMoney(pendiente)}`;
+  } else {
+    pill.textContent = 'Estado mes: pendiente ' + fmtMoney(pendiente);
+  }
+  pill.className = 'pill bad';
+  return;
+}
+
+
+  // Pendiente
+  pill.textContent = 'Estado mes: pendiente ' + fmtMoney(pendiente);
+  pill.className = 'pill bad';
+}
+
+
+  function renderBalanceGlobal(bal) {
+  const pill = document.getElementById('balanceGlobalPill');
+  const r = bal?.resumen;
+
+  if (!pill) return;
+
+  if (!r) {
+    pill.textContent = 'Balance actual: -';
+    pill.className = 'pill warn';
+    return;
+  }
+
+  if (!r.monto || r.monto <= 0) {
+    pill.textContent = 'Balance actual: están parejos ✅';
+    pill.className = 'pill ok';
+    return;
+  }
+
+  pill.textContent = 'Balance actual: ' + r.deudor + ' le debe a ' + r.acreedor + ' ' + fmtMoney(r.monto);
+  pill.className = 'pill bad';
+}
+
+
+  function renderCuentaCasa(cc) {
+    const pill = document.getElementById('cuentaCasaPill');
+    if (!cc) {
+      pill.textContent = 'Cuenta Casa: -';
+      return;
+    }
+    pill.textContent = `Cuenta Casa: Saldo ${fmtMoney(cc.saldo)} (Aportes ${fmtMoney(cc.aportes)} - Gastos ${fmtMoney(cc.gastosCuentaCasa)})`;
+  }
+
+  function renderDashboard() {
+    const sumsCategoria = {};
+    const sumsConcepto = {};
+    let total = 0;
+
+    DASH_ROWS.forEach(r => {
+      const cat = r.categoria || '(sin categoría)';
+      const concepto = r.concepto || '(sin concepto)';
+      const v = Number(r.costoTotal || 0);
+
+      sumsCategoria[cat] = (sumsCategoria[cat] || 0) + v;
+      sumsConcepto[concepto] = (sumsConcepto[concepto] || 0) + v;
+      total += v;
+    });
+
+    // Total del mes
+    document.getElementById('totalMes').textContent = 'Total: ' + fmtMoney(total);
+
+    // ---- Tabla por CATEGORÍA ----
+    const entriesCat = Object.entries(sumsCategoria).sort((a, b) => b[1] - a[1]);
+    const tb = document.querySelector('#tablaResumen tbody');
+    tb.innerHTML = '';
+    entriesCat.forEach(([cat, v]) => {
+      const tr = document.createElement('tr');
+      tr.className = 'clickable';
+      tr.onclick = () => {
+        DASH_FILTER = (DASH_FILTER === cat) ? null : cat;
+        renderDetalle();
+      };
+      tr.innerHTML = `<td>${cat}</td><td class="right">${fmtMoney(v)}</td>`;
+      tb.appendChild(tr);
+    });
+
+    // ---- Tabla por CONCEPTO ----
+    const entriesConcepto = Object.entries(sumsConcepto).sort((a, b) => b[1] - a[1]);
+    const tb2 = document.querySelector('#tablaConceptos tbody');
+    if (tb2) {
+      tb2.innerHTML = '';
+      entriesConcepto.forEach(([concepto, v]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${concepto}</td><td class="right">${fmtMoney(v)}</td>`;
+        tb2.appendChild(tr);
+      });
+    }
+
+    // Detalle (con filtro por categoría si clickeaste arriba)
+    renderDetalle();
+  }
+
+
+  function renderDetalle() {
+    const tb = document.querySelector('#tablaDetalle tbody');
+    tb.innerHTML = '';
+
+    const rows = DASH_FILTER ? DASH_ROWS.filter(r => r.categoria === DASH_FILTER) : DASH_ROWS.slice();
+    rows.sort((a,b) => (a.fechaISO < b.fechaISO ? 1 : -1));
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="nowrap">${r.fechaISO || ''}</td>
+        <td>${r.categoria || ''}</td>
+        <td>${r.concepto || ''}</td>
+        <td>${(r.notas || '').replaceAll('<','&lt;')}</td>
+        <td>${r.pagadoPor || ''}</td>
+        <td class="right">${fmtMoney(r.costoTotal || 0)}</td>
+        <td class="right">${fmtMoney(r.costoPP || 0)}</td>
+        <td>${r.medio || ''}</td>
+        <td>${r.estado || ''}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderMovDash(rows) {
+    const tb = document.querySelector('#tablaMovDash tbody');
+    tb.innerHTML = '';
+    rows.sort((a,b) => (a.fechaISO < b.fechaISO ? 1 : -1));
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="nowrap">${r.fechaISO || ''}</td>
+        <td>${r.tipo || ''}</td>
+        <td>${r.deudor || ''}</td>
+        <td>${r.acreedor || ''}</td>
+        <td class="right">${fmtMoney(r.monto || 0)}</td>
+        <td>${(r.notas || '').replaceAll('<','&lt;')}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  /************ SALDAR / APORTE MODAL ************/
+  function openMovModal(tipo) {
+    MOV_MODAL_ROW = null;
+    document.getElementById('btnMovBorrar').style.display = 'none';
+
+    const today = toDateInputValue(new Date());
+    document.getElementById('m_fecha').value = today;
+
+    document.getElementById('m_tipo').value = tipo;
+    onMovTipoChange();
+
+    document.getElementById('m_monto').value = '';
+    document.getElementById('m_notas').value = '';
+    document.getElementById('modalMovTitle').textContent = (tipo === 'Aporte') ? 'Registrar aporte a Cuenta Casa' : 'Saldar cuentas';
+
+    document.getElementById('modalMovBackdrop').style.display = 'flex';
+  }
+
+  function openSaldarFromBalance() {
+    const r = BAL_GLOBAL?.resumen || DASH_BAL?.resumen;
+    if (!r || !r.monto || r.monto <= 0) {
+      setToast('toastErr', '⚠️ No hay nada para saldar (están parejos)');
+      return;
+    }
+    openMovModal('Saldar');
+    document.getElementById('m_deudor').value = r.deudor;
+    document.getElementById('m_acreedor').value = r.acreedor;
+    document.getElementById('m_monto').value = r.monto;
+    document.getElementById('m_notas').value = 'Saldado por transferencia';
+  }
+
+  function closeMovModal() {
+    document.getElementById('modalMovBackdrop').style.display = 'none';
+  }
+
+  function onMovTipoChange() {
+    const tipo = document.getElementById('m_tipo').value;
+    const deudorLabel = document.querySelector("label[for='m_deudor']");
+    // Para Aporte: Acreedor fijo = Cuenta Casa
+    if (tipo === 'Aporte') {
+      document.getElementById('m_acreedor').value = 'Cuenta Casa';
+      document.getElementById('m_acreedor').disabled = true;
+    } else {
+      document.getElementById('m_acreedor').disabled = false;
+      if (document.getElementById('m_acreedor').value === 'Cuenta Casa') {
+        document.getElementById('m_acreedor').value = 'Bel';
+      }
+    }
+  }
+
+  function guardarMov() {
+  const payload = {
+    fechaISO: document.getElementById('m_fecha').value,
+    tipo: document.getElementById('m_tipo').value,
+    deudor: document.getElementById('m_deudor').value,
+    acreedor: document.getElementById('m_acreedor').value,
+    monto: document.getElementById('m_monto').value,
+    notas: document.getElementById('m_notas').value,
+  };
+
+  if (!payload.fechaISO || !payload.tipo || !payload.deudor || !payload.monto) {
+    setToast('toastErr', '⚠️ Completá fecha, tipo, deudor y monto');
+    return;
+  }
+  if (payload.tipo === 'Saldar' && !payload.acreedor) {
+    setToast('toastErr', '⚠️ Falta acreedor');
+    return;
+  }
+
+  const btn = document.getElementById('btnMovGuardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  const done = () => {
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+  };
+
+  const runner = google.script.run
+    .withSuccessHandler(() => {
+      done();
+      setToast('toastOk', '✅ Movimiento guardado');
+      closeMovModal();
+      cargarDashboard();
+      cargarEditar();
+    })
+    .withFailureHandler((e) => {
+      done();
+      setToast('toastErr', '⚠️ ' + (e?.message || e));
+    });
+
+  if (MOV_MODAL_ROW) {
+    runner.actualizarMovimiento(MOV_MODAL_ROW, payload);
+  } else {
+    runner.guardarMovimiento(payload);
+  }
+}
+
+
+  /************ EDITAR ************/
+  function cargarEditar() {
+    const ym = document.getElementById('monthPickerEdit').value;
+    if (!ym) return;
+    const [y, m] = ym.split('-').map(Number);
+
+    PromiseAll_([
+      new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(res => resolve({ gastos: res?.rows || [] }))
+          .withFailureHandler(err => reject(err))
+          .getGastosDelMes(y, m);
+      }),
+      new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(res => resolve({ movs: res?.rows || [] }))
+          .withFailureHandler(err => reject(err))
+          .getMovimientosDelMes(y, m);
+      }),
+    ])
+    .then(parts => {
+      const g = parts.find(x => x.gastos)?.gastos || [];
+      const mv = parts.find(x => x.movs)?.movs || [];
+      EDIT_GASTOS = g;
+      EDIT_MOVS = mv;
+      document.getElementById('editInfo').textContent = `Gastos: ${g.length} | Movs: ${mv.length}`;
+      renderEditGastos();
+      renderEditMovs();
+    })
+    .catch(e => setToast('toastErr', '⚠️ ' + (e?.message || e)));
+  }
+
+  function PromiseAll_(proms) { return Promise.all(proms); }
+
+  function renderEditGastos() {
+    const tb = document.querySelector('#tablaEditGastos tbody');
+    tb.innerHTML = '';
+    const rows = EDIT_GASTOS.slice().sort((a,b)=> (a.fechaISO < b.fechaISO ? 1 : -1));
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.rowNumber}</td>
+        <td class="nowrap">${r.fechaISO || ''}</td>
+        <td>${r.categoria || ''}</td>
+        <td>${r.concepto || ''}</td>
+        <td>${(r.notas || '').replaceAll('<','&lt;')}</td>
+        <td>${r.pagadoPor || ''}</td>
+        <td class="right">${fmtMoney(r.costoTotal || 0)}</td>
+        <td>${r.medio || ''}</td>
+        <td>${r.estado || ''}</td>
+        <td class="nowrap">
+          <div class="row">
+            <button class="secondary smallBtn" onclick="openGastoModal(${r.rowNumber})">Editar</button>
+            <button class="danger smallBtn" onclick="borrarGasto(${r.rowNumber})">Borrar</button>
+          </div>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderEditMovs() {
+    const tb = document.querySelector('#tablaEditMovs tbody');
+    tb.innerHTML = '';
+    const rows = EDIT_MOVS.slice().sort((a,b)=> (a.fechaISO < b.fechaISO ? 1 : -1));
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.rowNumber}</td>
+        <td class="nowrap">${r.fechaISO || ''}</td>
+        <td>${r.tipo || ''}</td>
+        <td>${r.deudor || ''}</td>
+        <td>${r.acreedor || ''}</td>
+        <td class="right">${fmtMoney(r.monto || 0)}</td>
+        <td>${(r.notas || '').replaceAll('<','&lt;')}</td>
+        <td class="nowrap">
+          <div class="row">
+            <button class="secondary smallBtn" onclick="openMovEdit(${r.rowNumber})">Editar</button>
+            <button class="danger smallBtn" onclick="borrarMov(${r.rowNumber})">Borrar</button>
+          </div>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  function onGastoModalCategoriaChange() {
+    const cat = document.getElementById('g_categoria').value;
+    const concepts = (CATALOGO?.conceptsByCategory?.[cat]) || [];
+    fillSelect('g_concepto', concepts, true);
+  }
+
+  function openGastoModal(rowNumber) {
+    const r = EDIT_GASTOS.find(x => x.rowNumber === rowNumber);
+    if (!r) return setToast('toastErr', '⚠️ No encuentro la fila ' + rowNumber);
+
+    GASTO_MODAL_ROW = rowNumber;
+    document.getElementById('modalGastoTitle').textContent = 'Editar gasto fila ' + rowNumber;
+
+    document.getElementById('g_fecha').value = r.fechaISO || '';
+    document.getElementById('g_pagadoPor').value = r.pagadoPor || '';
+    document.getElementById('g_categoria').value = r.categoria || '';
+    onGastoModalCategoriaChange();
+    document.getElementById('g_concepto').value = r.concepto || '';
+    document.getElementById('g_costoTotal').value = r.costoTotal || '';
+    document.getElementById('g_cantPersonas').value = (r.costoPP > 0 && r.costoTotal > 0) ? Math.round(r.costoTotal / r.costoPP) : 2;
+    document.getElementById('g_estado').value = r.estado || '';
+    document.getElementById('g_medio').value = r.medio || '';
+    document.getElementById('g_notas').value = r.notas || '';
+
+    document.getElementById('modalGastoBackdrop').style.display = 'flex';
+  }
+
+  function closeGastoModal() {
+    document.getElementById('modalGastoBackdrop').style.display = 'none';
+    GASTO_MODAL_ROW = null;
+  }
+
+  function guardarCambiosGasto() {
+    if (!GASTO_MODAL_ROW) return;
+
+    const payload = {
+      fechaISO: document.getElementById('g_fecha').value,
+      categoria: document.getElementById('g_categoria').value,
+      concepto: document.getElementById('g_concepto').value,
+      notas: document.getElementById('g_notas').value,
+      pagadoPor: document.getElementById('g_pagadoPor').value,
+      costoTotal: document.getElementById('g_costoTotal').value,
+      cantPersonas: document.getElementById('g_cantPersonas').value,
+      estado: document.getElementById('g_estado').value,
+      medio: document.getElementById('g_medio').value,
+    };
+
+    if (!payload.fechaISO || !payload.categoria || !payload.concepto || !payload.costoTotal) {
+      setToast('toastErr', '⚠️ Completá fecha, categoría, concepto y costo total');
+      return;
+    }
+
+    document.getElementById('btnGastoModalGuardar').disabled = true;
+    document.getElementById('btnGastoModalGuardar').textContent = 'Guardando…';
+
+    google.script.run
+      .withSuccessHandler(() => {
+        document.getElementById('btnGastoModalGuardar').disabled = false;
+        document.getElementById('btnGastoModalGuardar').textContent = 'Guardar cambios';
+        setToast('toastOk', '✅ Gasto actualizado');
+        closeGastoModal();
+        cargarDashboard();
+        cargarEditar();
+      })
+      .withFailureHandler((e) => {
+        document.getElementById('btnGastoModalGuardar').disabled = false;
+        document.getElementById('btnGastoModalGuardar').textContent = 'Guardar cambios';
+        setToast('toastErr', '⚠️ ' + (e?.message || e));
+      })
+      .actualizarGasto(GASTO_MODAL_ROW, payload);
+  }
+
+  function borrarGasto(rowNumber) {
+    if (!confirm('¿Borrar gasto fila ' + rowNumber + '?')) return;
+    google.script.run
+      .withSuccessHandler(() => {
+        setToast('toastOk', '✅ Gasto borrado');
+        cargarDashboard();
+        cargarEditar();
+      })
+      .withFailureHandler((e) => setToast('toastErr', '⚠️ ' + (e?.message || e)))
+      .borrarGasto(rowNumber);
+  }
+
+  function borrarGastoDesdeModal() {
+    if (!GASTO_MODAL_ROW) return;
+    borrarGasto(GASTO_MODAL_ROW);
+    closeGastoModal();
+  }
+
+  function openMovEdit(rowNumber) {
+    const r = EDIT_MOVS.find(x => x.rowNumber === rowNumber);
+    if (!r) return setToast('toastErr', '⚠️ No encuentro movimiento fila ' + rowNumber);
+
+    MOV_MODAL_ROW = rowNumber;
+    document.getElementById('btnMovBorrar').style.display = '';
+    document.getElementById('modalMovTitle').textContent = 'Editar movimiento fila ' + rowNumber;
+
+    document.getElementById('m_fecha').value = r.fechaISO || '';
+    document.getElementById('m_tipo').value = r.tipo || 'Aporte';
+    document.getElementById('m_deudor').value = r.deudor || 'Gonza';
+    document.getElementById('m_acreedor').value = r.acreedor || 'Cuenta Casa';
+    document.getElementById('m_monto').value = r.monto || '';
+    document.getElementById('m_notas').value = r.notas || '';
+
+    onMovTipoChange();
+
+    document.getElementById('modalMovBackdrop').style.display = 'flex';
+  }
+
+  function borrarMov(rowNumber) {
+    if (!confirm('¿Borrar movimiento fila ' + rowNumber + '?')) return;
+    google.script.run
+      .withSuccessHandler(() => {
+        setToast('toastOk', '✅ Movimiento borrado');
+        cargarDashboard();
+        cargarEditar();
+      })
+      .withFailureHandler((e) => setToast('toastErr', '⚠️ ' + (e?.message || e)))
+      .borrarMovimiento(rowNumber);
+  }
+
+  function borrarMovDesdeModal() {
+    if (!MOV_MODAL_ROW) return;
+    borrarMov(MOV_MODAL_ROW);
+    closeMovModal();
+  }
+
+  window.addEventListener('load', init);
+</script>
+</body>
+</html>
+
+
