@@ -91,6 +91,22 @@
     .muted { color: var(--muted); }
     .clickable { cursor:pointer; }
     .nowrap { white-space: nowrap; }
+    .pill { max-width: 100%; box-sizing: border-box; }
+
+    /* Celu: las tablas de detalle se muestran como tarjetas (sin scroll horizontal) */
+    @media (max-width: 720px) {
+      main { padding: 12px; }
+      .dashTop .field { min-width: 0; max-width: 100%; }
+      .pill { white-space: normal; border-radius: 14px; overflow-wrap: anywhere; }
+      .table.cards thead { display: none; }
+      .table.cards, .table.cards tbody, .table.cards tr { display: block; width: 100%; }
+      .table.cards tr { box-sizing: border-box; border: 1px solid rgba(255,255,255,.10); border-radius: 14px; padding: 6px 12px; margin-bottom: 10px; background: rgba(255,255,255,.03); }
+      .table.cards td { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05); text-align: right; white-space: normal; overflow-wrap: anywhere; }
+      .table.cards td:last-child { border-bottom: 0; }
+      .table.cards td:empty { display: none; }
+      .table.cards td::before { content: attr(data-label); flex: 0 0 34%; text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+      .table.cards td .row { width: 100%; }
+    }
 
     /* Modal */
     .modalBackdrop{
@@ -257,7 +273,7 @@
 
       <div style="margin-top:14px;">
         <div class="muted" style="margin-bottom:8px;">Detalle (incluye Notas):</div>
-        <table class="table" id="tablaDetalle">
+        <table class="table cards" id="tablaDetalle">
           <thead>
             <tr>
               <th>Fecha</th>
@@ -277,7 +293,7 @@
 
       <div style="margin-top:16px;">
         <div class="muted" style="margin-bottom:8px;">Movimientos del mes (Aportes / Saldar):</div>
-        <table class="table" id="tablaMovDash">
+        <table class="table cards" id="tablaMovDash">
           <thead>
             <tr>
               <th>Fecha</th>
@@ -309,7 +325,7 @@
       </div>
 
       <div class="muted" style="margin-top:8px;">Gastos (con Notas):</div>
-      <table class="table" id="tablaEditGastos">
+      <table class="table cards" id="tablaEditGastos">
         <thead>
           <tr>
             <th>Fila</th>
@@ -328,7 +344,7 @@
       </table>
 
       <div class="muted" style="margin-top:16px;">Movimientos (Aportes / Saldar):</div>
-      <table class="table" id="tablaEditMovs">
+      <table class="table cards" id="tablaEditMovs">
         <thead>
           <tr>
             <th>Fila</th>
@@ -1204,6 +1220,16 @@ function renderEstadoMes(rec) {
     borrarMov(MOV_MODAL_ROW);
     closeMovModal();
   }
+
+  // Etiquetas para la vista de tarjetas en el celu (se toman de los encabezados)
+  ['tablaDetalle','tablaMovDash','tablaEditGastos','tablaEditMovs'].forEach((id) => {
+    const t = document.getElementById(id);
+    const aplicar = () => {
+      const heads = [...t.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+      t.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { td.dataset.label = heads[i] || ''; }));
+    };
+    new MutationObserver(aplicar).observe(t.querySelector('tbody'), { childList: true });
+  });
 
   window.addEventListener('load', init);
 </script>

@@ -1,6 +1,6 @@
-// Service worker: cachea solo el "cascarón" de la app para que abra rápido.
+﻿// Service worker: cachea solo el "cascarón" de la app para que abra rápido.
 // Los datos (Apps Script) NUNCA se cachean: siempre van a la red.
-const CACHE = 'gastos-v1';
+const CACHE = 'gastos-v2';
 const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -32,3 +32,4 @@ self.addEventListener('fetch', (e) => {
       .catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
   );
 });
+
